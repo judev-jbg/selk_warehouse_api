@@ -22,7 +22,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
 
 // Middleware de manejo de errores
-app.use(errorMiddleware);
+// app.use(errorMiddleware);
 
 // Crear servidor HTTP
 const server = http.createServer(app);
