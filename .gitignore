@@ -60,3 +60,4 @@ Thumbs.db
 /temp
 *.sqlite
 *.sqlite3
+*.txt

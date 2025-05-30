@@ -1,5 +1,4 @@
 import { Sequelize } from "sequelize";
-import env from "./environment";
 import logger from "../utils/logger";
 
 // Configuración de la conexión a la base de datos
