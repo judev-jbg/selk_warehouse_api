@@ -1,10 +1,11 @@
-// src/app.ts
+// src/app.ts (actualizar)
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import { config } from "./config";
+import { config } from "./config/index";
 import { errorHandler, notFound } from "./middlewares/error.middleware";
 import { logger } from "./utils/logger";
+import apiRoutes from "./routes/index";
 
 const app = express();
 
@@ -30,12 +31,13 @@ app.use((req, res, next) => {
   logger.info(`${req.method} ${req.url}`, {
     ip: req.ip,
     userAgent: req.get("User-Agent"),
+    deviceId: req.get("Device-ID"),
     timestamp: new Date().toISOString(),
   });
   next();
 });
 
-// Health check
+// Health check expandido
 app.get("/health", (req, res) => {
   res.json({
     success: true,
@@ -44,15 +46,37 @@ app.get("/health", (req, res) => {
       timestamp: new Date().toISOString(),
       version: "1.0.0",
       environment: config.nodeEnv,
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      features: {
+        authentication: true,
+        supabase: true,
+        odoo_integration:
+          config.nodeEnv === "development" ? "simulated" : "pending",
+      },
     },
+    message: "SELK Warehouse API funcionando correctamente",
   });
 });
 
-// Rutas API (las agregaremos en el siguiente hito)
-app.use(`/api/${config.apiVersion}`, (req, res, next) => {
+// Rutas API principales
+app.use(`/api/${config.apiVersion}`, apiRoutes);
+
+// Ruta raíz informativa
+app.get("/", (req, res) => {
   res.json({
     success: true,
-    message: "SELK Warehouse API está funcionando correctamente",
+    data: {
+      name: "SELK Warehouse API",
+      version: "1.0.0",
+      description: "API Backend para Sistema de Gestión de Almacén SELK",
+      endpoints: {
+        health: "/health",
+        api: `/api/${config.apiVersion}`,
+        auth: `/api/${config.apiVersion}/auth`,
+        docs: "Próximamente",
+      },
+    },
     timestamp: new Date().toISOString(),
   });
 });

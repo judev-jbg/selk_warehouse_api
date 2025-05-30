@@ -137,8 +137,8 @@ export class AuthService {
         throw new AppError("Sesión expirada", 401);
       }
 
-      // 4. Buscar usuario
-      const user = await this.supabaseService.findUserByOdooId(decoded.userId);
+      // 4. Buscar usuario - CORREGIDO: usar findUserById en lugar de findUserByOdooId
+      const user = await this.supabaseService.findUserById(decoded.userId);
       if (!user || !user.is_active) {
         throw new AppError("Usuario no encontrado o inactivo", 401);
       }
@@ -199,7 +199,8 @@ export class AuthService {
    */
   async getProfile(userId: string): Promise<UserApp> {
     try {
-      const user = await this.supabaseService.findUserByUsername(userId);
+      // CORREGIDO: Buscar por ID en lugar de username
+      const user = await this.supabaseService.findUserById(userId);
       if (!user) {
         throw new AppError("Usuario no encontrado", 404);
       }
@@ -213,7 +214,6 @@ export class AuthService {
       throw new AppError("Error interno obteniendo perfil", 500);
     }
   }
-
   /**
    * Verificar token de acceso
    */

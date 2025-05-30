@@ -1,6 +1,6 @@
 // src/services/odoo.service.ts
 import { config } from "../config/index";
-import { logger } from "../utils/logger.util";
+import { logger } from "../utils/logger";
 
 interface OdooUser {
   id: number;

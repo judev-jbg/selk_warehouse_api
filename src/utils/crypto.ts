@@ -1,6 +1,6 @@
-// src/utils/crypto.util.ts
+// src/utils/crypto.util.ts (versión simplificada)
+import { config } from "../config/index";
 import bcrypt from "bcryptjs";
-import { config } from "../config";
 import jwt from "jsonwebtoken";
 import { createHash } from "crypto";
 
@@ -33,8 +33,6 @@ export const jwtUtils = {
   generateAccessToken: (payload: any): string => {
     return jwt.sign(payload, config.jwt.secret, {
       expiresIn: config.jwt.expireTime,
-      issuer: "selk-warehouse-api",
-      audience: "selk-warehouse-app",
     });
   },
 
@@ -42,8 +40,6 @@ export const jwtUtils = {
   generateRefreshToken: (payload: any): string => {
     return jwt.sign(payload, config.jwt.refreshSecret, {
       expiresIn: config.jwt.refreshExpireTime,
-      issuer: "selk-warehouse-api",
-      audience: "selk-warehouse-app",
     });
   },
 

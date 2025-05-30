@@ -10,6 +10,28 @@ import { logger } from "../utils/logger";
 
 export class SupabaseService {
   /**
+   * Buscar usuario por ID
+   */
+  async findUserById(userId: string): Promise<UserApp | null> {
+    try {
+      const { data, error } = await supabaseClient
+        .from("users_app")
+        .select("*")
+        .eq("id", userId)
+        .eq("is_active", true)
+        .single();
+
+      if (error && error.code !== "PGRST116") {
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      logger.error("Error buscando usuario por ID:", error);
+      throw error;
+    }
+  }
+  /**
    * Buscar usuario por username
    */
   async findUserByUsername(username: string): Promise<UserApp | null> {
