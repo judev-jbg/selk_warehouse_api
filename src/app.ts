@@ -1,53 +1,66 @@
+// src/app.ts
 import express from "express";
-import http from "http";
 import cors from "cors";
 import helmet from "helmet";
-import env from "./config/environment";
-import { testConnection } from "./config/database";
-import configureSocketServer from "./config/socket";
-import logger from "./utils/logger";
-import errorMiddleware from "./middlewares/error.middleware";
-import authRoutes from "./routes/auth.routes";
+import { config } from "./config";
+import { errorHandler, notFound } from "./middlewares/error.middleware";
+import { logger } from "./utils/logger";
 
-// Crear aplicación Express
 const app = express();
 
-// Configuración de middlewares
+// Middleware de seguridad
 app.use(helmet());
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// Rutas API
-app.use("/api/auth", authRoutes);
+// CORS configurado
+app.use(
+  cors({
+    origin: config.cors.allowedOrigins,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Device-ID"],
+  })
+);
+
+// Parsing de JSON
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+// Logging de requests
+app.use((req, res, next) => {
+  logger.info(`${req.method} ${req.url}`, {
+    ip: req.ip,
+    userAgent: req.get("User-Agent"),
+    timestamp: new Date().toISOString(),
+  });
+  next();
+});
+
+// Health check
+app.get("/health", (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      status: "OK",
+      timestamp: new Date().toISOString(),
+      version: "1.0.0",
+      environment: config.nodeEnv,
+    },
+  });
+});
+
+// Rutas API (las agregaremos en el siguiente hito)
+app.use(`/api/${config.apiVersion}`, (req, res, next) => {
+  res.json({
+    success: true,
+    message: "SELK Warehouse API está funcionando correctamente",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Middleware de error 404
+app.use(notFound);
 
 // Middleware de manejo de errores
-// app.use(errorMiddleware);
+app.use(errorHandler);
 
-// Crear servidor HTTP
-const server = http.createServer(app);
-
-// Configurar servidor WebSocket
-const io = configureSocketServer(server);
-
-// Iniciar servidor
-const startServer = async (): Promise<void> => {
-  try {
-    // Probar conexión a la base de datos
-    await testConnection();
-
-    // Iniciar servidor HTTP
-    server.listen(env.PORT, () => {
-      logger.info(
-        `Servidor iniciado en el puerto ${env.PORT} (${env.NODE_ENV})`
-      );
-    });
-  } catch (error) {
-    logger.error("Error al iniciar el servidor:", error);
-    process.exit(1);
-  }
-};
-
-startServer();
-
-export { app, server, io };
+export default app;

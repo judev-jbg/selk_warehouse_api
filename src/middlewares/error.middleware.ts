@@ -1,27 +1,56 @@
+// src/middleware/error.middleware.ts
 import { Request, Response, NextFunction } from "express";
-import logger from "../utils/logger";
+import { logger } from "../utils/logger";
+import { ApiResponse } from "../types/common.types";
 
-interface AppError extends Error {
-  statusCode?: number;
+export class AppError extends Error {
+  public statusCode: number;
+  public isOperational: boolean;
+
+  constructor(message: string, statusCode: number) {
+    super(message);
+    this.statusCode = statusCode;
+    this.isOperational = true;
+
+    Error.captureStackTrace(this, this.constructor);
+  }
 }
 
-const errorMiddleware = (
-  err: AppError,
+export const errorHandler = (
+  error: Error,
   req: Request,
-  res: Response,
+  res: Response<ApiResponse>,
   next: NextFunction
-): Response => {
-  const statusCode = err.statusCode || 500;
+) => {
+  let statusCode = 500;
+  let message = "Error interno del servidor";
 
-  // Loggear el error
-  logger.error(`[${statusCode}] ${err.message}`);
+  if (error instanceof AppError) {
+    statusCode = error.statusCode;
+    message = error.message;
+  }
 
-  // Responder con el error
-  return res.status(statusCode).json({
+  // Log del error
+  logger.error("API Error", {
+    error: error.message,
+    stack: error.stack,
+    url: req.url,
+    method: req.method,
+    ip: req.ip,
+    userAgent: req.get("User-Agent"),
+  });
+
+  res.status(statusCode).json({
     success: false,
-    message: err.message || "Error interno del servidor",
-    stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
+    error: message,
+    timestamp: new Date().toISOString(),
   });
 };
 
-export default errorMiddleware;
+export const notFound = (req: Request, res: Response<ApiResponse>) => {
+  res.status(404).json({
+    success: false,
+    error: `Ruta ${req.originalUrl} no encontrada`,
+    timestamp: new Date().toISOString(),
+  });
+};

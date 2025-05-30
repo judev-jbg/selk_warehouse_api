@@ -11,7 +11,7 @@ export const config = {
   jwt: {
     secret: process.env.JWT_SECRET || "fallback_secret",
     refreshSecret: process.env.JWT_REFRESH_SECRET || "fallback_refresh_secret",
-    expireTime: process.env.JWT_EXPIRE_TIME || "2h",
+    expireTime: process.env.JWT_EXPIRE_TIME || "8h",
     refreshExpireTime: process.env.JWT_REFRESH_EXPIRE_TIME || "24h",
   },
 
