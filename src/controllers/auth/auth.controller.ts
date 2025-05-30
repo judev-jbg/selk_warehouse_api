@@ -1,117 +1,173 @@
-import { Request, Response } from "express";
-import jwt from "jsonwebtoken";
-import User from "../models/user.model";
-import env from "../config/environment";
-import logger from "../utils/logger";
+// src/controllers/auth/auth.controller.ts
+import { Request, Response, NextFunction } from "express";
+import { AuthService } from "../../services/auth.service";
+import { SupabaseService } from "../../services/supabase.service";
+import { ApiResponse } from "../../types/common.types";
+import { LoginRequest } from "../../types/auth.types";
+import { logger } from "../../utils/logger";
 
-// Interfaz para la solicitud de login
-interface LoginRequest {
-  username: string;
-  password: string;
-}
+export class AuthController {
+  private authService: AuthService;
+  private supabaseService: SupabaseService;
 
-// Controlador de autenticación
-const authController = {
+  constructor() {
+    this.authService = new AuthService();
+    this.supabaseService = new SupabaseService();
+  }
+
   /**
-   * Iniciar sesión de usuario
+   * POST /api/v1/auth/login
+   * Iniciar sesión
    */
-  login: async (req: Request, res: Response): Promise<Response> => {
+  login = async (
+    req: Request,
+    res: Response<ApiResponse>,
+    next: NextFunction
+  ) => {
     try {
-      const { username, password } = req.body as LoginRequest;
+      const loginData: LoginRequest = req.body;
+      const ipAddress = req.ip || req.connection.remoteAddress || "unknown";
 
-      // Buscar usuario por nombre de usuario
-      const user = await User.findOne({ where: { username } });
-      if (!user) {
-        return res.status(401).json({
-          success: false,
-          message: "Credenciales inválidas",
-        });
-      }
+      const result = await this.authService.login(loginData, ipAddress);
 
-      // Verificar contraseña
-      const isPasswordValid = await user.comparePassword(password);
-      if (!isPasswordValid) {
-        return res.status(401).json({
-          success: false,
-          message: "Credenciales inválidas",
-        });
-      }
+      res.status(200).json({
+        success: true,
+        data: result,
+        message: "Login exitoso",
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 
-      // Generar token JWT
-      const token = jwt.sign(
-        {
-          id: user.id,
-          username: user.username,
-          roles: user.roles,
-        },
-        env.JWT_SECRET,
-        { expiresIn: env.JWT_EXPIRES_IN }
+  /**
+   * POST /api/v1/auth/refresh
+   * Refrescar token de acceso
+   */
+  refreshToken = async (
+    req: Request,
+    res: Response<ApiResponse>,
+    next: NextFunction
+  ) => {
+    try {
+      const { refresh_token, device_identifier } = req.body;
+
+      const result = await this.authService.refreshToken(
+        refresh_token,
+        device_identifier
       );
 
-      // Generar refresh token (implementación básica)
-      const refreshToken = jwt.sign({ id: user.id }, env.JWT_SECRET, {
-        expiresIn: "7d",
+      res.status(200).json({
+        success: true,
+        data: result,
+        message: "Token refrescado exitosamente",
+        timestamp: new Date().toISOString(),
       });
+    } catch (error) {
+      next(error);
+    }
+  };
 
-      return res.status(200).json({
+  /**
+   * POST /api/v1/auth/logout
+   * Cerrar sesión
+   */
+  logout = async (
+    req: Request,
+    res: Response<ApiResponse>,
+    next: NextFunction
+  ) => {
+    try {
+      const userId = req.user!.userId;
+      const deviceId = req.deviceId!;
+
+      await this.authService.logout(userId, deviceId);
+
+      res.status(200).json({
+        success: true,
+        message: "Logout exitoso",
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * GET /api/v1/auth/profile
+   * Obtener perfil del usuario autenticado
+   */
+  getProfile = async (
+    req: Request,
+    res: Response<ApiResponse>,
+    next: NextFunction
+  ) => {
+    try {
+      const userId = req.user!.userId;
+
+      const user = await this.authService.getProfile(userId);
+
+      // Remover datos sensibles
+      const { created_at, updated_at, last_odoo_sync, ...userProfile } = user;
+
+      res.status(200).json({
+        success: true,
+        data: userProfile,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * GET /api/v1/auth/audit-logs
+   * Obtener logs de auditoría del usuario
+   */
+  getAuditLogs = async (
+    req: Request,
+    res: Response<ApiResponse>,
+    next: NextFunction
+  ) => {
+    try {
+      const userId = req.user!.userId;
+      const limit = parseInt(req.query.limit as string) || 50;
+
+      const logs = await this.supabaseService.getUserAuditLogs(userId, limit);
+
+      res.status(200).json({
+        success: true,
+        data: logs,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * POST /api/v1/auth/verify-token
+   * Verificar si un token es válido (para debugging)
+   */
+  verifyToken = async (
+    req: Request,
+    res: Response<ApiResponse>,
+    next: NextFunction
+  ) => {
+    try {
+      // Si llegamos aquí, el middleware authenticate ya validó el token
+      res.status(200).json({
         success: true,
         data: {
-          id: user.id,
-          username: user.username,
-          name: user.name,
-          roles: user.roles,
-          token,
-          refreshToken,
+          valid: true,
+          user: req.user,
         },
-      });
-    } catch (error) {
-      logger.error("Error en login:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Error interno del servidor",
-      });
-    }
-  },
-
-  /**
-   * Cerrar sesión de usuario
-   */
-  logout: async (req: Request, res: Response): Promise<Response> => {
-    try {
-      // En una implementación completa, aquí se invalidaría el token
-      // Por ahora, simplemente retornamos éxito
-      return res.status(200).json({
-        success: true,
-        message: "Sesión cerrada correctamente",
-      });
-    } catch (error) {
-      logger.error("Error en logout:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Error interno del servidor",
-      });
-    }
-  },
-
-  /**
-   * Validar token de usuario
-   */
-  validateToken: async (req: Request, res: Response): Promise<Response> => {
-    try {
-      // El middleware auth.middleware ya validó el token
-      // Simplemente retornamos éxito
-      return res.status(200).json({
-        success: true,
         message: "Token válido",
+        timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      logger.error("Error en validateToken:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Error interno del servidor",
-      });
+      next(error);
     }
-  },
-};
-
-export default authController;
+  };
+}
