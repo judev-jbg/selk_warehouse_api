@@ -15,7 +15,12 @@ app.use(helmet());
 // CORS configurado
 app.use(
   cors({
-    origin: config.cors.allowedOrigins,
+    origin: [
+      "http://localhost:3000",
+      "http://192.168.1.50:3000", // Cambiar por tu IP
+      "http://10.0.2.2:3000", // Para emulador Android
+      "http://127.0.0.1:3000", // Localhost alternativo
+    ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "Device-ID"],

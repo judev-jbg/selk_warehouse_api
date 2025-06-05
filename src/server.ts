@@ -4,6 +4,7 @@ import { config } from "./config/index";
 import { logger } from "./utils/logger";
 import { testSupabaseConnection } from "./config/supabase";
 import { setupScheduledTasks } from "./utils/scheduler";
+import { hostname } from "os";
 
 const startServer = async () => {
   try {
@@ -22,12 +23,13 @@ const startServer = async () => {
     logger.info("✅ Tareas programadas configuradas");
 
     // Iniciar servidor
-    const server = app.listen(config.port, () => {
+    const server = app.listen(Number(config.port), "0.0.0.0", () => {
       logger.info("🚀 ============================================");
       logger.info("🏭 SELK WAREHOUSE API INICIADO EXITOSAMENTE");
       logger.info("🚀 ============================================");
       logger.info(`📱 Ambiente: ${config.nodeEnv}`);
-      logger.info(`🔗 URL: http://localhost:${config.port}`);
+      logger.info(`🔗 Local: http://localhost:${config.port}`);
+      logger.info(`🌐 Red: http:192.168.1.50:${config.port}`); // Mostrar que acepta conexiones de red
       logger.info(`🏥 Health: http://localhost:${config.port}/health`);
       logger.info(
         `🔐 Auth: http://localhost:${config.port}/api/${config.apiVersion}/auth`
