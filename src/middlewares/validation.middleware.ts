@@ -55,3 +55,49 @@ export const authValidation = {
     }),
   }),
 };
+
+/**
+ * Esquemas de validación para colocación
+ */
+export const colocacionValidation = {
+  // Validación para actualización de producto
+  updateProduct: Joi.object({
+    location: Joi.string()
+      .pattern(/^[A-Z]\d{2}[0-5]$/)
+      .allow(null, "")
+      .messages({
+        "string.pattern.base":
+          "La ubicación debe tener el formato: Letra + 2 dígitos + altura (0-5). Ejemplo: A213",
+      }),
+
+    stock: Joi.number().min(0).precision(3).messages({
+      "number.min": "El stock no puede ser negativo",
+      "number.precision": "El stock puede tener máximo 3 decimales",
+    }),
+  })
+    .min(1)
+    .messages({
+      "object.min":
+        "Debe proporcionar al menos un campo para actualizar (location o stock)",
+    }),
+
+  // Validación para código de barras
+  barcode: Joi.string()
+    .pattern(/^[0-9]{13,14}$/)
+    .required()
+    .messages({
+      "string.pattern.base":
+        "El código de barras debe ser EAN13 (13 dígitos) o DUN14 (14 dígitos)",
+      "any.required": "El código de barras es requerido",
+    }),
+
+  // Validación para ubicación
+  location: Joi.string()
+    .pattern(/^[A-Z]\d{2}[0-5]$/)
+    .required()
+    .messages({
+      "string.pattern.base":
+        "La ubicación debe tener el formato: Letra + 2 dígitos + altura (0-5). Ejemplo: A213",
+      "any.required": "La ubicación es requerida",
+    }),
+};
