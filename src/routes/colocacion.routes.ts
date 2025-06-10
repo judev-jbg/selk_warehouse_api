@@ -12,12 +12,18 @@ import {
   updateRateLimit,
   generalRateLimit,
 } from "../middlewares/rate-limit.middleware";
-
 import { labelRateLimit } from "../middlewares/rate-limit.middleware";
+import { SyncController } from "../controllers/colocacion/sync.controller";
+import { AdvancedProductController } from "../controllers/colocacion/advanced-product.controller";
+import { productSearchThrottle } from "../middlewares/search-timeout.middleware";
+import { detectCriticalChanges } from "../middlewares/critical-change.middleware";
+import { healthCheck } from "../middlewares/health.middleware";
 
 const router = Router();
 const productController = new ProductController();
 const labelController = new LabelController();
+const syncController = new SyncController();
+const advancedProductController = new AdvancedProductController();
 
 /**
  * @route   GET /api/v1/colocacion/products/search/:barcode
@@ -256,5 +262,178 @@ router.delete(
   checkPermission("colocacion", "admin"),
   labelController.cleanupOldLabels
 );
+
+/**
+ * RUTAS AVANZADAS DE PRODUCTOS
+ */
+
+/**
+ * @route   PATCH /api/v1/colocacion/products/:id/advanced
+ * @desc    Actualizar producto con validaciones avanzadas y optimistic updates
+ * @access  Private (colocacion.write)
+ */
+router.patch(
+  "/products/:id/advanced",
+  updateRateLimit,
+  authenticate,
+  checkPermission("colocacion", "write"),
+  detectCriticalChanges,
+  validate(colocacionValidation.updateProduct),
+  advancedProductController.updateProductAdvanced
+);
+
+/**
+ * @route   POST /api/v1/colocacion/products/validate
+ * @desc    Validar datos de producto sin realizar cambios
+ * @access  Private (colocacion.read)
+ */
+router.post(
+  "/products/validate",
+  generalRateLimit,
+  authenticate,
+  checkPermission("colocacion", "read"),
+  advancedProductController.validateProductData
+);
+
+/**
+ * @route   POST /api/v1/colocacion/undo
+ * @desc    Deshacer última operación
+ * @access  Private (colocacion.write)
+ */
+router.post(
+  "/undo",
+  updateRateLimit,
+  authenticate,
+  checkPermission("colocacion", "write"),
+  advancedProductController.undoLastOperation
+);
+
+/**
+ * @route   POST /api/v1/colocacion/redo
+ * @desc    Rehacer operación
+ * @access  Private (colocacion.write)
+ */
+router.post(
+  "/redo",
+  updateRateLimit,
+  authenticate,
+  checkPermission("colocacion", "write"),
+  advancedProductController.redoLastOperation
+);
+
+/**
+ * @route   GET /api/v1/colocacion/undo-redo/history
+ * @desc    Obtener historial de operaciones undo/redo
+ * @access  Private (colocacion.read)
+ */
+router.get(
+  "/undo-redo/history",
+  generalRateLimit,
+  authenticate,
+  checkPermission("colocacion", "read"),
+  advancedProductController.getUndoRedoHistory
+);
+
+/**
+ * @route   POST /api/v1/colocacion/barcode/validate
+ * @desc    Validar código de barras con sugerencias
+ * @access  Private (colocacion.read)
+ */
+router.post(
+  "/barcode/validate",
+  searchRateLimit,
+  authenticate,
+  checkPermission("colocacion", "read"),
+  advancedProductController.validateBarcode
+);
+
+/**
+ * RUTAS DE SINCRONIZACIÓN
+ */
+
+/**
+ * @route   POST /api/v1/colocacion/sync/product/:id
+ * @desc    Sincronizar producto específico con Odoo
+ * @access  Private (colocacion.write)
+ */
+router.post(
+  "/sync/product/:id",
+  updateRateLimit,
+  authenticate,
+  checkPermission("colocacion", "write"),
+  syncController.syncProduct
+);
+
+/**
+ * @route   POST /api/v1/colocacion/sync/push/:id
+ * @desc    Enviar cambios locales a Odoo
+ * @access  Private (colocacion.write)
+ */
+router.post(
+  "/sync/push/:id",
+  updateRateLimit,
+  authenticate,
+  checkPermission("colocacion", "write"),
+  syncController.pushToOdoo
+);
+
+/**
+ * @route   POST /api/v1/colocacion/sync/full
+ * @desc    Ejecutar sincronización completa (solo administradores)
+ * @access  Private (colocacion.admin)
+ */
+router.post(
+  "/sync/full",
+  generalRateLimit,
+  authenticate,
+  checkPermission("colocacion", "admin"),
+  syncController.fullSync
+);
+
+/**
+ * @route   GET /api/v1/colocacion/sync/stats
+ * @desc    Obtener estadísticas de sincronización
+ * @access  Private (colocacion.read)
+ */
+router.get(
+  "/sync/stats",
+  generalRateLimit,
+  authenticate,
+  checkPermission("colocacion", "read"),
+  syncController.getSyncStats
+);
+
+/**
+ * @route   GET /api/v1/colocacion/sync/connectivity
+ * @desc    Verificar conectividad con Odoo
+ * @access  Private (colocacion.read)
+ */
+router.get(
+  "/sync/connectivity",
+  generalRateLimit,
+  authenticate,
+  checkPermission("colocacion", "read"),
+  syncController.checkConnectivity
+);
+
+/**
+ * RUTA DE HEALTH CHECK
+ */
+
+/**
+ * @route   GET /api/v1/colocacion/health
+ * @desc    Verificar salud del módulo de colocación
+ * @access  Private (colocacion.read)
+ */
+router.get(
+  "/health",
+  generalRateLimit,
+  authenticate,
+  checkPermission("colocacion", "read"),
+  healthCheck
+);
+
+// Aplicar middleware de throttle para búsquedas con sufijo
+router.use("/products/search/:barcode", productSearchThrottle);
 
 export default router;

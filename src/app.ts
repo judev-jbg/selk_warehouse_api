@@ -6,6 +6,7 @@ import { config } from "./config/index";
 import { errorHandler, notFound } from "./middlewares/error.middleware";
 import { logger } from "./utils/logger";
 import apiRoutes from "./routes/index";
+import { healthCheck } from "./middlewares/health.middleware";
 
 const app = express();
 
@@ -63,6 +64,7 @@ app.get("/health", (req, res) => {
     message: "SELK Warehouse API funcionando correctamente",
   });
 });
+app.get("/health/full", healthCheck);
 
 // Rutas API principales
 app.use(`/api/${config.apiVersion}`, apiRoutes);
