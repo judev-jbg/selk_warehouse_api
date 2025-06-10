@@ -1,0 +1,39 @@
+selk_warehouse_api/
+├── src/
+│   ├── config/
+│   │   ├── database.ts
+│   │   ├── supabase.ts
+│   │   └── index.ts
+│   ├── controllers/
+│   │   └── auth/
+│   ├── middleware/
+│   │   ├── auth.middleware.ts
+│   │   ├── error.middleware.ts
+│   │   └── validation.middleware.ts
+│   ├── models/
+│   │   ├── User.ts
+│   │   ├── UserSession.ts
+│   │   └── AuditLog.ts
+│   ├── routes/
+│   │   ├── auth.routes.ts
+│   │   └── index.ts
+│   ├── services/
+│   │   ├── auth.service.ts
+│   │   ├── odoo.service.ts
+│   │   └── supabase.service.ts
+│   ├── types/
+│   │   ├── auth.types.ts
+│   │   └── common.types.ts
+│   ├── utils/
+│   │   ├── crypto.util.ts
+│   │   ├── logger.util.ts
+│   │   └── validation.util.ts
+│   ├── app.ts
+│   └── server.ts
+├── tests/
+├── .env.example
+├── .gitignore
+├── package.json
+├── tsconfig.json
+├── docker-compose.yml (para Odoo local)
+└── README.md
