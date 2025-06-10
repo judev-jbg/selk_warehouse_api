@@ -1,6 +1,7 @@
 // src/models/ProductLabel.ts
 import { Model, DataTypes, Optional } from "sequelize";
 import sequelize from "../config/database";
+import Product from "./Product";
 
 interface ProductLabelAttributes {
   id: string;
@@ -147,6 +148,11 @@ ProductLabel.init(
     ],
   }
 );
+
+ProductLabel.belongsTo(Product, {
+  foreignKey: "product_id",
+  as: "product",
+});
 
 export default ProductLabel;
 export { ProductLabelAttributes, ProductLabelCreationAttributes };
