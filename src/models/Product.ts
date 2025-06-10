@@ -1,6 +1,7 @@
 // src/models/Product.ts
 import { Model, DataTypes, Optional } from "sequelize";
 import sequelize from "../config/database";
+import ProductLabel from "./ProductLabel";
 
 interface ProductAttributes {
   id: string;
@@ -171,6 +172,11 @@ Product.init(
     ],
   }
 );
+
+Product.hasMany(ProductLabel, {
+  foreignKey: "product_id",
+  as: "labels",
+});
 
 export default Product;
 export { ProductAttributes, ProductCreationAttributes };
