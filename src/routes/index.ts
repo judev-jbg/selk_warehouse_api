@@ -2,11 +2,14 @@
 import { Router } from "express";
 import authRoutes from "./auth.routes";
 import { authenticate, checkPermission } from "../middlewares/auth.middleware";
+import colocacionRoutes from "./colocacion.routes";
 
 const router = Router();
 
 // Rutas de autenticación
 router.use("/auth", authRoutes);
+
+router.use("/colocacion", colocacionRoutes);
 
 // Rutas de prueba para módulos (implementaremos después)
 router.get(

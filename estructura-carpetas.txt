@@ -5,19 +5,31 @@ selk_warehouse_api/
 │   │   ├── supabase.ts
 │   │   └── index.ts
 │   ├── controllers/
-│   │   └── auth/
+│   │   ├── auth/
+│   │   │   └── auth.controller.ts
+│   │   ├── colocacion/
+│   │   │   ├── product.controller.ts
+│   │   │   ├── location.controller.ts
+│   │   │   └── label.controller.ts
 │   ├── middleware/
 │   │   ├── auth.middleware.ts
 │   │   ├── error.middleware.ts
 │   │   └── validation.middleware.ts
 │   ├── models/
+│   │   ├── Product.ts
+│   │   ├── ProductLocation.ts
+│   │   ├── Label.ts
 │   │   ├── User.ts
 │   │   ├── UserSession.ts
 │   │   └── AuditLog.ts
 │   ├── routes/
+│   │   ├── product.routes.ts
 │   │   ├── auth.routes.ts
 │   │   └── index.ts
 │   ├── services/
+│   │   ├── product.service.ts
+│   │   ├── odoo-product.service..ts
+│   │   ├── label.service.ts
 │   │   ├── auth.service.ts
 │   │   ├── odoo.service.ts
 │   │   └── supabase.service.ts
@@ -28,6 +40,9 @@ selk_warehouse_api/
 │   │   ├── crypto.util.ts
 │   │   ├── logger.util.ts
 │   │   └── validation.util.ts
+│   ├── validators/
+│   │   ├── barcode.validator.ts
+│   │   └── location.validator.ts
 │   ├── app.ts
 │   └── server.ts
 ├── tests/

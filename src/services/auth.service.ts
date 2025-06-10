@@ -34,7 +34,7 @@ export class AuthService {
         throw new AppError("Credenciales inválidas", 401);
       }
 
-      // 2. Buscar o crear usuario en nuestra base de datos
+      // 2. Buscar o crear usuario en nuestra base de datos (supabase)
       let appUser = await this.supabaseService.findUserByOdooId(odooUser.id);
 
       if (!appUser) {
